@@ -72,16 +72,20 @@ async function fetchOccupiedCartons(){
   generateCartons();
 }
 
+
 /* ---------- Boot ---------- */
 window.onload = function (){
   setCurrentDay();
   loadConfig();               // <--- lee precio/estado
   fetchOccupiedCartons();
   supabase
-    .channel('inscripciones-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, () => fetchOccupiedCartons())
-    .subscribe();
-};
+  .channel('inscripciones-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'inscripciones' }, () => {
+    fetchOccupiedCartons();        // lo que ya haces
+    refreshSoldCountAllDays();     // <-- suma global en vivo
+  })
+  .subscribe();
+}; 
 
 /* ---------- Navegación ---------- */
 function showInscription(){
@@ -343,6 +347,7 @@ async function saveInscription(){
     alert("Inscripción guardada exitosamente.");
     occupiedCartons = new Set([...occupiedCartons, ...selectedCartons]);
     inscriptions.push({ name, phone, ref, cartons: [...selectedCartons], total, proofURL, event_day: isoDay });
+await refreshSoldCountAllDays();
 
     sendToWhatsApp();
     goHome();
@@ -391,12 +396,18 @@ async function showAdmin(){
 function showAdminPanel(){
   hideAll();
   document.getElementById("admin-panel-window")?.classList.remove("hidden");
-  const soldEl = document.getElementById("sold-count");
-  if (soldEl) soldEl.textContent = 0;
+
+  // total histórico de cartones vendidos
+  refreshSoldCountAllDays();
+
   fetchClientCount();
   showProofs();
-  openConfigInAdmin();    // <--- precarga precio/estado en el panel
+  openConfigInAdmin();
 }
+
+
+  // <--- precarga precio/estado en el panel
+
 async function loginAdmin(){
   const email = document.getElementById("admin-email").value;
   const password = document.getElementById("admin-password").value;
@@ -438,14 +449,10 @@ function sendToWhatsApp(){
 
 /* ---------- Formatear cartones: 5, 7-9, 12 ---------- */
 function formatCartons(arr){
-  const a = (arr || []).filter(n => Number.isInteger(n)).sort((x,y)=>x-y);
-  const res = [];
-  for (let i=0; i<a.length; i++){
-    let start=a[i], end=start;
-    while (i+1<a.length && a[i+1]===end+1){ end=a[++i]; }
-    res.push(start===end ? `${start}` : `${start}-${end}`);
-  }
-  return res.join(', ');
+  return (arr || [])
+    .filter(Number.isInteger)
+    .sort((a,b) => a - b)
+    .join(', ');
 }
 
 /* ---------- Helpers Storage + Reset ---------- */
@@ -538,6 +545,7 @@ Object.assign(window, {
   openSales,
 closeSales,
 setSales,
+refreshSoldCountAllDays,
 });
 
 // Estado en memoria (ya lo tienes):
@@ -586,3 +594,25 @@ async function setSales(isOpen){
 // botones
 function openSales(){ setSales(true); }
 function closeSales(){ setSales(false); }
+
+function renderSoldCount() {
+  const el = document.getElementById('sold-count');
+  if (el) el.textContent = occupiedCartons.size; // cantidad de números ocupados
+}
+// Cuenta TODOS los cartones vendidos (histórico)
+async function refreshSoldCountAllDays() {
+  const { data, error } = await supabase
+    .from('inscripciones')
+    .select('cartons'); // obtiene todos los arrays
+
+  if (error) {
+    console.error('Error conteo total:', error);
+    return;
+  }
+
+  const totalSold = (data || [])
+    .reduce((acc, r) => acc + (Array.isArray(r.cartons) ? r.cartons.length : 0), 0);
+
+  const el = document.getElementById('sold-count');
+  if (el) el.textContent = totalSold;
+}
