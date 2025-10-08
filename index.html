@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bingo Web</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="main-container">
+    <header>
+      <img src="https://i.postimg.cc/zBsRmqmk/d238d87a-546c-4ced-94b6-4c96c0034e9f.png" alt="logo-png" id="logo">
+      <h2>Bienvenidos al Bingo Virtual EL Boom<h2>
+    </header>
+    <div class="botones">
+      <button onclick="showInscription()">Inscribirse</button>
+      <button onclick="showAdmin()">Administrador</button>
+    </div>
+  </div>
+
+  <!-- Inscripción -->
+ <div id="inscription-window" class="hidden">
+  <h2>Inscripción</h2>
+  <form id="form" onsubmit="return false;">
+    <input type="text" id="name" placeholder="Nombre completo" required />
+    <input type="tel" id="phone" placeholder="Teléfono"
+           inputmode="tel" autocomplete="tel" required />
+    <button id="btn-insc-next" type="button" onclick="goToCartons()" disabled>
+      Siguiente
+    </button>
+    <button onclick="goHome()">Inicio</button>
+  </form>
+</div>
+
+
+  <!-- Admin -->
+<!-- LOGIN ADMIN -->
+<div id="admin-window" class="hidden">
+  <h2>Acceso Administrador</h2>
+  <input type="email" id="admin-email" placeholder="Correo electrónico" />
+  <input type="password" id="admin-password" placeholder="Contraseña" />
+  <div class="cartons-actions">
+    <button onclick="loginAdmin()">Entrar</button>
+    <button onclick="goHome()">Inicio</button>
+  </div>
+</div>
+
+<!-- PANEL ADMIN (se muestra SOLO después del login) -->
+<div id="admin-panel-window" class="hidden">
+  <h2>Panel Administrador</h2>
+
+  <div class="admin-sales" style="margin-top:14px;display:flex;align-items:center;gap:10px">
+  <span id="sales-badge" class="badge">–</span>
+  <button onclick="openSales()">Abrir ventas</button>
+  <button onclick="closeSales()">Cerrar ventas</button>
+</div>
+
+<div class="admin-config" style="margin-top:16px; padding:12px; border-radius:10px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08)">
+  <h3 style="margin:0 0 10px">Configuración</h3>
+  <label>Precio por cartón (Bs)</label>
+  <input id="cfg-price" type="number" min="0" step="0.01" placeholder="Ej: 5.00" style="width:160px; margin-left:8px">
+  <label style="margin-left:16px">
+    <input id="cfg-open" type="checkbox"> Ventas abiertas
+  </label>
+  <button onclick="saveConfig()" style="margin-left:16px">Guardar</button>
+</div>
+
+  <div class="admin-stats">
+    <p><strong>Cartones vendidos:</strong> <span id="sold-count">0</span></p>
+    <p><strong>Clientes inscritos:</strong> <span id="clients-count">0</span></p>
+  </div>
+
+  <div id="proofs-container"></div>
+
+  <div class="cartons-actions">
+    <button onclick="resetData()">Reiniciar Cartones</button>
+    <button onclick="logout()">Cerrar sesión</button>
+    <button onclick="goHome()">Inicio</button>
+  </div>
+</div>
+
+
+<!-- MODAL CARTONES (cuadrados) -->
+<div id="cartons-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="cartonsTitle">
+  <div class="modal-overlay" onclick="closeCartonsModal()"></div>
+
+  <div class="modal-card" role="document">
+    <header class="modal-head">
+      <h3 id="cartonsTitle">Proceso de compra</h3>
+      <button class="close" aria-label="Cerrar" onclick="closeCartonsModal()">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label class="sr-only" for="day-select">Selecciona el día</label>
+      <select id="day-select" onchange="fetchOccupiedCartons()"></select>
+
+      <!-- Grilla de cartones cuadrados con scroll -->
+      <div id="cartons-container" class="grid-squares"></div>
+    </div>
+
+    <footer class="modal-foot">
+      <button id="btn-next" class="btn-next" onclick="goToPayment()" disabled>Siguiente</button>
+    </footer>
+  </div>
+</div>
+
+
+  <!-- Pago -->
+  <div id="payment-window" class="hidden">
+    <h2>Pago Móvil</h2>
+    <p>Realiza tu pago a los siguientes datos:</p>
+    <ul>
+      <li><strong>Teléfono:</strong> 04121890444</li>
+      <li><strong>Cédula:</strong> 21286069</li>
+      <li><strong>Banco:</strong> Venezuela(0102)</li>
+    </ul>
+    <p>Total a pagar: $<span id="final-amount">0</span></p>
+    <label for="proof">Sube el comprobante de pago:</label>
+    <input type="file" id="proof"
+           accept="image/*" />
+    <button id="whatsapp-btn" onclick="saveInscription()">Enviar por WhatsApp</button>
+
+    <button onclick="goHome()" style="margin-top: 10px;">Inicio</button> 
+  </div>
+<div style="display: flex; gap: 10px; margin-top: 15px;">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
