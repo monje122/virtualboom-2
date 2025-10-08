@@ -435,3 +435,51 @@ input.invalid{
 }
 .badge.open  { background:#0f5132; color:#d1fae5; }
 .badge.closed{ background:#5c1f1f; color:#ffdede; }
+
+/* ===== Ajustes para TELÉFONO ===== */
+@media (max-width: 640px) {
+  /* 1) Tamaños de los cartones y la “X” en móvil */
+  :root{
+    /* más pequeño o más grande según prefieras */
+    --cell: 56px;            /* lado del cuadrado en móvil */
+    --font-cell: 16px;       /* tamaño del número */
+    --x-size: 30px;          /* largo de la X en ocupados */
+    --x-thick: 6px;          /* grosor de la X */
+  }
+
+  /* 2) Modal más bajo y más estrecho en móvil */
+  .modal-card{
+    width: 94vw;             /* más angosto en móvil */
+    max-height: 70dvh;       /* altura del modal (usa dvh para móviles) */
+    margin: 4vh auto 0;      /* menos margen arriba */
+  }
+
+  /* 3) Espaciados y tipografías dentro del modal */
+  .modal-head{ padding: 8px 12px; }
+  .modal-head h3{ font-size: 16px; }
+  .modal-body{ padding: 10px; gap: 8px; }
+  .modal-foot{ padding: 10px 12px; }
+
+  /* 4) Grilla: un poco más cerrada en móvil */
+  .grid-squares{
+    gap: 8px;
+  }
+}
+
+/* ===== Aún más compacto para pantallas MUY pequeñas ===== */
+@media (max-width: 380px) {
+  :root{
+    --cell: 50px;
+    --font-cell: 15px;
+  }
+  .modal-card{
+    max-height: 66dvh;
+  }
+}
+
+/* ===== Si el problema es la ALTURA (modo horizontal, pantallas bajas) ===== */
+@media (max-height: 700px) {
+  .modal-card{
+    max-height: 62dvh; /* baja más el modal si la pantalla es “baja” */
+  }
+}
