@@ -421,7 +421,7 @@ body.modal-open{ overflow:hidden; }
 /* Accesibilidad */
 .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 
-@media (max-width:640px){
+@media (max-width:340px){
   .modal-card{ max-heig
 
 /* borde rojo y glow suave cuando algo falta o es inválido */
@@ -436,7 +436,7 @@ input.invalid{
 .badge.open  { background:#0f5132; color:#d1fae5; }
 .badge.closed{ background:#5c1f1f; color:#ffdede; }
 
-@media (max-width: 440px) {
+@media (max-width: 340px) {
   /* 1) Tamaños de los cartones y la “X” en móvil */
   :root{
     /* más pequeño o más grande según prefieras */
@@ -449,7 +449,7 @@ input.invalid{
   /* 2) Modal más bajo y más estrecho en móvil */
   .modal-card{
     width: 94vw;             /* más angosto en móvil */
-    max-height: 70dvh;       /* altura del modal (usa dvh para móviles) */
+    max-height: 40dvh;       /* altura del modal (usa dvh para móviles) */
     margin: 4vh auto 0;      /* menos margen arriba */
   }
 
@@ -477,7 +477,7 @@ input.invalid{
 }
 
 /* ===== Si el problema es la ALTURA (modo horizontal, pantallas bajas) ===== */
-@media (max-height: 500px) {
+@media (max-height: 400px) {
   .modal-card{
     max-height: 62dvh; /* baja más el modal si la pantalla es “baja” */
   }
