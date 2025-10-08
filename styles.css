@@ -436,8 +436,7 @@ input.invalid{
 .badge.open  { background:#0f5132; color:#d1fae5; }
 .badge.closed{ background:#5c1f1f; color:#ffdede; }
 
-/* ===== Ajustes para TELÉFONO ===== */
-@media (max-width: 640px) {
+@media (max-width: 440px) {
   /* 1) Tamaños de los cartones y la “X” en móvil */
   :root{
     /* más pequeño o más grande según prefieras */
@@ -478,7 +477,7 @@ input.invalid{
 }
 
 /* ===== Si el problema es la ALTURA (modo horizontal, pantallas bajas) ===== */
-@media (max-height: 700px) {
+@media (max-height: 500px) {
   .modal-card{
     max-height: 62dvh; /* baja más el modal si la pantalla es “baja” */
   }
