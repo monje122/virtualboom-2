@@ -435,15 +435,46 @@ input.invalid{
 .badge.closed{ background:#5c1f1f; color:#ffdede; }
 
 
-/* ===== Aún más compacto para pantallas MUY pequeñas ===== */
-@media (max-width: 380px) {
+/* ===== TELÉFONO: modal más bajo y grilla desplazable ===== */
+@media (max-width: 640px) {
   :root{
-    --cell: 50px;
-    --font-cell: 15px;
+    --cell: 52px;      /* tamaño del cuadrado */
+    --font-cell: 15px; /* tamaño del número */
+    --x-size: 28px;    /* largo de la X en ocupados */
+    --x-thick: 6px;    /* grosor de la X */
   }
+
   .modal-card{
-    max-height: 66dvh;
+    width: 94vw;
+    max-height: 62dvh;       /* << controla la altura total del modal */
+    margin: 3vh auto 0;
+    border-radius: 12px;
+  }
+
+  .modal-head{ padding: 8px 12px; }
+  .modal-head h3{ font-size: 16px; }
+  .modal-body{ padding: 10px; gap: 8px; overflow: hidden; }
+  .modal-foot{ padding: 10px 12px; }
+
+  /* La grilla ocupa el espacio y scrollea */
+  .grid-squares{
+    flex: 1 1 auto;
+    overflow: auto;
+    gap: 8px;
+    max-height: calc(62dvh - 110px); /* resta header+footer */
   }
 }
 
+/* Ultra-compacto para pantallas MUY pequeñas */
+@media (max-width: 360px) {
+  :root{ --cell: 46px; --font-cell: 14px; }
+  .modal-card{ max-height: 58dvh; }
+  .grid-squares{ max-height: calc(58dvh - 110px); }
+}
+
+/* Pantallas bajas (horizontal) */
+@media (max-height: 640px) and (max-width: 900px) {
+  .modal-card{ max-height: 54dvh; }
+  .grid-squares{ max-height: calc(54dvh - 110px); }
+}
 
