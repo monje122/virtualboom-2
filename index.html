@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bingo virtual el boom</title>
+  <title>Bingo Web</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -62,6 +62,11 @@
   <label>Precio por cartón (Bs)</label>
   <input id="cfg-price" type="number" min="0" step="0.01" placeholder="Ej: 5.00" style="width:160px; margin-left:8px">
   <label style="margin-left:16px">
+    <div class="cfg-row">
+  <label for="cfg-visible"><strong>Cartones visibles hoy</strong> (1 – 4000)</label>
+  <input id="cfg-visible" type="number" min="1" max="4000" step="1" />
+</div>
+    
     <input id="cfg-open" type="checkbox"> Ventas abiertas
   </label>
   <button onclick="saveConfig()" style="margin-left:16px">Guardar</button>
@@ -112,9 +117,9 @@
     <h2>Pago Móvil</h2>
     <p>Realiza tu pago a los siguientes datos:</p>
     <ul>
-      <li><strong>Teléfono:</strong> 0412-1890444</li>
-      <li><strong>Cédula:</strong> 21286069</li>
-      <li><strong>Banco:</strong> Venezuela(0102)</li>
+      <li><strong>Teléfono:</strong> 0412-3714136</li>
+      <li><strong>Cédula:</strong> 26740060</li>
+      <li><strong>Banco:</strong> Mercantil</li>
     </ul>
     <p>Total a pagar:<span id="final-amount">0</span></p>
     <label for="proof">Sube el comprobante de pago:</label>
