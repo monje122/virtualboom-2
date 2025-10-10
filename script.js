@@ -6,6 +6,9 @@ let selectedCartons = [];
 let occupiedCartons = new Set();
 let inscriptions = [];
 let total = 0;
+let CARTON_TOTAL   = 4000;  // total del sistema
+let VISIBLE_TODAY  = 4000;  // cuántos muestro hoy (1..CARTON_TOTAL)
+
 
 // ---- Config dinámica ----
 let PRICE = 5;                 // fallback si no hay config en BD
@@ -34,16 +37,20 @@ async function loadConfig() {
   const { data, error } = await supabase
     .from('config')
     .select('key,value')
-    .in('key', ['precio_ticket','ventas_abiertas']);
+    .in('key', ['precio_ticket','ventas_abiertas','cartones_visibles']);
   if (!error && Array.isArray(data)) {
     const map = Object.fromEntries(data.map(r => [r.key, r.value]));
-    PRICE = Number(map['precio_ticket'] ?? PRICE);
-    SALES_OPEN = (map['ventas_abiertas'] ?? SALES_OPEN) === true;
+    PRICE       = Number(map['precio_ticket'] ?? PRICE);
+    SALES_OPEN  = (map['ventas_abiertas'] ?? SALES_OPEN) === true;
+    VISIBLE_TODAY = Math.max(1, Math.min(
+      CARTON_TOTAL,
+      parseInt(map['cartones_visibles'] ?? VISIBLE_TODAY, 10)
+    ));
     applySalesStateToUI();
   }
-  // recalcular total por si cambió el precio
   total = selectedCartons.length * PRICE;
   renderTotals();
+  renderCartonStats(); // <- pinta etiquetas (visibles / total / disponibles)
 }
 
 /* ---------- Cargar día ---------- */
@@ -70,6 +77,7 @@ async function fetchOccupiedCartons(){
     occupiedCartons = new Set(data || []);
   }
   generateCartons();
+    renderCartonStats();
 }
 
 
@@ -122,7 +130,9 @@ function generateCartons(){
   const container = document.getElementById("cartons-container");
   if (!container) return;
   container.innerHTML = "";
-  for (let i=1; i<=4000; i++){
+
+  const LIM = Math.min(CARTON_TOTAL, VISIBLE_TODAY);
+  for (let i = 1; i <= LIM; i++){
     const div = document.createElement("div");
     div.className = "carton";
     div.textContent = i;
@@ -267,35 +277,51 @@ async function fetchClientCount() {
 
 /* ===== Config Admin: abrir y guardar (precio/ventas) ===== */
 async function openConfigInAdmin() {
-  await loadConfig(); // precarga valores actuales
+  await loadConfig();
   const priceEl = document.getElementById('cfg-price');
   const openEl  = document.getElementById('cfg-open');
+  const visEl   = document.getElementById('cfg-visible');
   if (priceEl) priceEl.value = PRICE.toString();
   if (openEl)  openEl.checked = SALES_OPEN;
+  if (visEl)   visEl.value = VISIBLE_TODAY.toString();
 }
+
 async function saveConfig() {
   const price = parseFloat(document.getElementById('cfg-price').value);
   const open  = document.getElementById('cfg-open').checked;
+  const vis   = parseInt(document.getElementById('cfg-visible').value, 10);
 
   if (Number.isNaN(price) || price < 0) {
     alert('Precio inválido');
     return;
   }
+  if (Number.isNaN(vis) || vis < 1 || vis > CARTON_TOTAL) {
+    alert(`Cartones visibles inválido. Debe estar entre 1 y ${CARTON_TOTAL}.`);
+    return;
+  }
+
   const { error } = await supabase
     .from('config')
     .upsert([
       { key: 'precio_ticket',   value: price },
-      { key: 'ventas_abiertas', value: open }
+      { key: 'ventas_abiertas', value: open  },
+      { key: 'cartones_visibles', value: vis }
     ], { onConflict: 'key' });
 
   if (error) { alert('No se pudo guardar: ' + error.message); return; }
 
   PRICE = price;
   SALES_OPEN = open;
+  VISIBLE_TODAY = vis;
+
   total = selectedCartons.length * PRICE;
   renderTotals();
+  fetchOccupiedCartons(); // <- regenera la grilla con el nuevo límite
+  renderCartonStats();
+
   alert('Configuración actualizada.');
 }
+
 
 /* ============== Guardar inscripción (RPC anti-duplicados) ============== */
 async function saveInscription(){
@@ -696,4 +722,18 @@ async function refreshSoldCountAllDays() {
     console.error(err);
     alert("No se pudo eliminar: " + (err.message || err));
   }
+}
+function renderCartonStats(){
+  const vis = document.getElementById('ui-visible');
+  const tot = document.getElementById('ui-total');
+  const soldToday = document.getElementById('ui-sold-today');
+  const avail = document.getElementById('ui-available-today');
+
+  const vendidosHoy = occupiedCartons.size;              // ocupados (día actual)
+  const disponibles = Math.max(0, VISIBLE_TODAY - vendidosHoy);
+
+  if (vis)  vis.textContent = VISIBLE_TODAY;
+  if (tot)  tot.textContent = CARTON_TOTAL;
+  if (soldToday) soldToday.textContent = vendidosHoy;
+  if (avail)     avail.textContent = disponibles;
 }
