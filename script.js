@@ -229,25 +229,29 @@ async function showProofs(){
     return;
   }
   data.forEach((inscription, index) => {
-    const cartones = Array.isArray(inscription.cartons) ? inscription.cartons : [];
-    const cantidad = cartones.length;
-    const listaFormateada = formatCartons(cartones);
-    const fecha = inscription.event_day || inscription.day || '';
-    const div = document.createElement("div");
-    div.className = "proof-card";
-    div.innerHTML = `
-      <p class="proof-title">
-        <strong>${index + 1}. ${inscription.name}</strong> — ${inscription.phone}
-        ${fecha ? `<span class="meta">• ${fecha}</span>` : ''}
-      </p>
-      <p class="meta"><strong>Cartones (${cantidad}):</strong> ${listaFormateada || '<em>Sin cartones</em>'}</p>
-      <p class="meta"><strong>Total:</strong> ${CURRENCY} ${(inscription.total ?? 0).toFixed(2)}</p>
-      ${inscription.proof_url ? `<img src="${inscription.proof_url}" alt="Comprobante" onclick="viewImage('${inscription.proof_url}')" />` : ''}
-    `;
-    proofsContainer.appendChild(div);
-  });
-}
+  const cartones = Array.isArray(inscription.cartons) ? inscription.cartons : [];
+  const cantidad = cartones.length;
+  const listaFormateada = formatCartons(cartones);
+  const fecha = inscription.event_day || inscription.day || '';
 
+  const div = document.createElement("div");
+  div.className = "proof-card";
+  div.dataset.insc = inscription.id; // <- para poder quitarla del DOM tras borrar
+  div.innerHTML = `
+    <p class="proof-title">
+      <strong>${index + 1}. ${inscription.name}</strong> — ${inscription.phone}
+      ${fecha ? `<span class="meta">• ${fecha}</span>` : ''}
+    </p>
+    <p class="meta"><strong>Cartones (${cantidad}):</strong> ${listaFormateada || '<em>Sin cartones</em>'}</p>
+    <p class="meta"><strong>Total:</strong> ${CURRENCY} ${(inscription.total ?? 0).toFixed(2)}</p>
+    ${inscription.proof_url ? `<img src="${inscription.proof_url}" alt="Comprobante" onclick="viewImage('${inscription.proof_url}')" />` : ''}
+    <div class="proof-actions">
+      <button class="btn-danger" onclick="deleteInscriptionById(${inscription.id})">Eliminar comprobante</button>
+    </div>
+  `;
+  proofsContainer.appendChild(div);
+});
+}
 async function fetchClientCount() {
   const { count, error } = await supabase
     .from('inscripciones')
@@ -546,6 +550,7 @@ Object.assign(window, {
 closeSales,
 setSales,
 refreshSoldCountAllDays,
+deleteInscriptionById,
 });
 
 // Estado en memoria (ya lo tienes):
@@ -615,4 +620,80 @@ async function refreshSoldCountAllDays() {
 
   const el = document.getElementById('sold-count');
   if (el) el.textContent = totalSold;
+}
+
+  async function deleteInscriptionById(id){
+  // 1) confirmación y sesión admin
+  if (!confirm("¿Eliminar este comprobante y liberar sus cartones?")) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session){
+    alert("Debes iniciar sesión como administrador.");
+    return;
+  }
+
+  try{
+    // 2) Traer la fila para conocer proof_url, cartones y día
+    const { data: row, error: getErr } = await supabase
+      .from('inscripciones')
+      .select('id, proof_url, cartons, event_day, day')
+      .eq('id', id)
+      .single();
+
+    if (getErr || !row){
+      throw new Error(getErr?.message || "No se encontró la inscripción.");
+    }
+
+    const proofUrl = row.proof_url || null;
+    const cartons = Array.isArray(row.cartons) ? row.cartons : [];
+    const evDay   = row.event_day || row.day || null;
+
+    // 3) Borrar el archivo del bucket (si hay)
+    if (proofUrl){
+      const path = storagePathFromPublicUrl(proofUrl);
+      if (path){
+        // Ignoramos error si el archivo ya no está
+        await supabase.storage.from('comprobantes').remove([path]);
+      }
+    }
+
+    // 4) Borrar la inscripción
+    const { error: delInsErr } = await supabase
+      .from('inscripciones')
+      .delete()
+      .eq('id', id);
+    if (delInsErr) throw delInsErr;
+
+    // 5) Liberar cartones: borrar filas de boletas del mismo día
+    if (cartons.length && evDay){
+      // primero intentar con event_day
+      let { error: delBoletasErr } = await supabase
+        .from('boletas')
+        .delete()
+        .in('carton', cartons)
+        .eq('event_day', evDay);
+
+      // si tu tabla usa "day" en lugar de "event_day"
+      if (delBoletasErr){
+        await supabase
+          .from('boletas')
+          .delete()
+          .in('carton', cartons)
+          .eq('day', evDay);
+      }
+    }
+
+    // 6) Quitar la tarjeta del DOM y refrescar contadores/ocupados
+    const card = document.querySelector(`.proof-card[data-insc="${id}"]`);
+    if (card) card.remove();
+
+    await fetchOccupiedCartons();        // refresca cuadricula/ocupados
+    await refreshSoldCountAllDays();     // refresca total vendidos
+    await fetchClientCount();            // refresca clientes
+
+    alert("Comprobante eliminado y cartones liberados.");
+  } catch(err){
+    console.error(err);
+    alert("No se pudo eliminar: " + (err.message || err));
+  }
 }
